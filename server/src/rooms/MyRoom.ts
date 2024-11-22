@@ -4,8 +4,19 @@ import { MyRoomState, Player } from "./schema/MyRoomState";
 // list of avatars
 const avatars = ['dino', 'bean', 'bag', 'btfly', 'bobo', 'ghostiny', 'ghosty', 'mark'];
 
+
+type Direction = "up" | "down" | "left" | "right";
+
+const movementDelta: Record<Direction, { x: number; y: number }> = {
+  up: { x: 0, y: -1 },
+  down: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+};
+
+
 export class MyRoom extends Room<MyRoomState> {
-  maxClients = 4;
+  maxClients = 100;
 
   onCreate (options: any) {
     this.setState(new MyRoomState());
@@ -16,11 +27,17 @@ export class MyRoom extends Room<MyRoomState> {
       player.y = message.y;
     });
 
-    this.onMessage("type", (client, message) => {
-      //
-      // handle "type" message
-      //
+    this.onMessage<{ direction: Direction }>("move-key", (client, message) => {
+      if (movementDelta[message.direction]) {
+        const player = this.state.players.get(client.sessionId);
+        const move = movementDelta[message.direction];
+        player.x += move.x;
+        player.y += move.y;
+      } else {
+        console.warn("Invalid movement direction:", message.direction);
+      }
     });
+    
   }
 
   onJoin (client: Client, options: any) {

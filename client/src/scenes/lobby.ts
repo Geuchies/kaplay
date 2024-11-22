@@ -19,6 +19,32 @@ export function createLobbyScene() {
       k.destroy(spritesBySessionId[sessionId]);
     });
 
+    // Log arrow key press
+    k.onKeyDown("left", () => {
+      console.log("Left arrow key pressed");
+      room.send("move-key", { direction: "left" });
+    });
+
+    k.onKeyDown("right", () => {
+      console.log("Right arrow key pressed");
+      room.send("move-key", { direction: "right" });
+    });
+
+    k.onKeyDown("up", () => {
+      console.log("Up arrow key pressed");
+      room.send("move-key", { direction: "up" });
+    });
+
+    k.onKeyDown("down", () => {
+      console.log("Down arrow key pressed");
+      room.send("move-key", { direction: "down" });
+    });
+
+    k.onKeyDown("a", () => {
+      console.log("a key pressed");
+      room.send("move-key", { direction: "a" });
+    });
+
     k.onClick(() => {
       room.send("move", k.mousePos());
     });
