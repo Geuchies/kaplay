@@ -1,12 +1,10 @@
 import { k } from "../App";
-
 import { Room } from "colyseus.js";
 import type { MyRoomState, Player } from "../../../server/src/rooms/schema/MyRoomState";
 
 export function createLobbyScene() {
   k.scene("lobby", (room: Room<MyRoomState>) => {
-
-    // keep track of player sprites
+    // Keep track of player sprites
     const spritesBySessionId: Record<string, any> = {};
 
     // Create a text object in the top-left corner
@@ -16,20 +14,33 @@ export function createLobbyScene() {
       k.fixed(), // Keeps the text in the same position even when the camera moves
     ]);
 
-    // listen when a player is added on server state
+    // Listen when a player is added on server state
     room.state.players.onAdd((player, sessionId) => {
       const sprite = createPlayer(player, room);
       spritesBySessionId[sessionId] = sprite;
 
       // Update the coordinate display for the player's own sprite
       if (sessionId === room.sessionId) {
-        sprite.onUpdate(() => {
-          coordinateText.text = `Position: (x: ${Math.round(sprite.pos.x)}, y: ${Math.round(sprite.pos.y)})`;
+        // Adjust the camera position based on the player's position
+        k.onUpdate(() => {
+          const targetX = sprite.pos.x;
+          const targetY = sprite.pos.y;
+
+          // Smoothly adjust the camera to follow the player
+          k.camPos(
+            k.vec2(
+              k.lerp(k.camPos().x, targetX, 12 * k.dt()),
+              k.lerp(k.camPos().y, targetY, 12 * k.dt())
+            )
+          );
+
+          // Update the coordinate text
+          coordinateText.text = `Position: (x: ${Math.round(targetX)}, y: ${Math.round(targetY)})`;
         });
       }
     });
 
-    // listen when a player is removed from server state
+    // Listen when a player is removed from server state
     room.state.players.onRemove((player, sessionId) => {
       k.destroy(spritesBySessionId[sessionId]);
     });
@@ -68,10 +79,7 @@ function createPlayer(player: Player, room: Room<MyRoomState>) {
     k.scale(0.5),
   ]);
 
-  sprite.onUpdate(() => {
-    sprite.pos.x += (player.x - sprite.pos.x) * 12 * k.dt();
-    sprite.pos.y += (player.y - sprite.pos.y) * 12 * k.dt();
-  });
+  // No need to update sprite position, server updates it
 
   return sprite;
 }
