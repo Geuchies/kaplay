@@ -9,9 +9,24 @@ export function createLobbyScene() {
     // keep track of player sprites
     const spritesBySessionId: Record<string, any> = {};
 
+    // Create a text object in the top-left corner
+    const coordinateText = k.add([
+      k.text("Position: (x: 0, y: 0)", { size: 16 }), // Default text
+      k.pos(10, 10), // Top-left corner
+      k.fixed(), // Keeps the text in the same position even when the camera moves
+    ]);
+
     // listen when a player is added on server state
     room.state.players.onAdd((player, sessionId) => {
-      spritesBySessionId[sessionId] = createPlayer(player, room);
+      const sprite = createPlayer(player, room);
+      spritesBySessionId[sessionId] = sprite;
+
+      // Update the coordinate display for the player's own sprite
+      if (sessionId === room.sessionId) {
+        sprite.onUpdate(() => {
+          coordinateText.text = `Position: (x: ${Math.round(sprite.pos.x)}, y: ${Math.round(sprite.pos.y)})`;
+        });
+      }
     });
 
     // listen when a player is removed from server state
@@ -21,34 +36,24 @@ export function createLobbyScene() {
 
     // Log arrow key press
     k.onKeyDown("left", () => {
-      console.log("Left arrow key pressed");
       room.send("move-key", { direction: "left" });
     });
 
     k.onKeyDown("right", () => {
-      console.log("Right arrow key pressed");
       room.send("move-key", { direction: "right" });
     });
 
     k.onKeyDown("up", () => {
-      console.log("Up arrow key pressed");
       room.send("move-key", { direction: "up" });
     });
 
     k.onKeyDown("down", () => {
-      console.log("Down arrow key pressed");
       room.send("move-key", { direction: "down" });
-    });
-
-    k.onKeyDown("a", () => {
-      console.log("a key pressed");
-      room.send("move-key", { direction: "a" });
     });
 
     k.onClick(() => {
       room.send("move", k.mousePos());
     });
-
   });
 }
 
@@ -60,7 +65,7 @@ function createPlayer(player: Player, room: Room<MyRoomState>) {
     k.sprite(player.avatar),
     k.pos(player.x, player.y),
     k.anchor("center"),
-    k.scale(0.5)
+    k.scale(0.5),
   ]);
 
   sprite.onUpdate(() => {
