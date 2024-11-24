@@ -19,23 +19,19 @@ export function createLobbyScene() {
       const sprite = createPlayer(player, room);
       spritesBySessionId[sessionId] = sprite;
 
-      // Update the coordinate display for the player's own sprite
+      // If this is the current player's sprite, move the camera
       if (sessionId === room.sessionId) {
-        // Adjust the camera position based on the player's position
         k.onUpdate(() => {
-          const targetX = sprite.pos.x;
-          const targetY = sprite.pos.y;
-
           // Smoothly adjust the camera to follow the player
           k.camPos(
             k.vec2(
-              k.lerp(k.camPos().x, targetX, 12 * k.dt()),
-              k.lerp(k.camPos().y, targetY, 12 * k.dt())
+              k.lerp(k.camPos().x, sprite.pos.x, 12 * k.dt()),
+              k.lerp(k.camPos().y, sprite.pos.y, 12 * k.dt())
             )
           );
 
           // Update the coordinate text
-          coordinateText.text = `Position: (x: ${Math.round(targetX)}, y: ${Math.round(targetY)})`;
+          coordinateText.text = `Position: (x: ${Math.round(sprite.pos.x)}, y: ${Math.round(sprite.pos.y)})`;
         });
       }
     });
@@ -45,7 +41,7 @@ export function createLobbyScene() {
       k.destroy(spritesBySessionId[sessionId]);
     });
 
-    // Log arrow key press
+    // Key input to send movement commands to the server
     k.onKeyDown("left", () => {
       room.send("move-key", { direction: "left" });
     });
@@ -79,7 +75,11 @@ function createPlayer(player: Player, room: Room<MyRoomState>) {
     k.scale(0.5),
   ]);
 
-  // No need to update sprite position, server updates it
+  // Update the sprite position based on server state
+  sprite.onUpdate(() => {
+    sprite.pos.x += (player.x - sprite.pos.x) * 12 * k.dt();
+    sprite.pos.y += (player.y - sprite.pos.y) * 12 * k.dt();
+  });
 
   return sprite;
 }
