@@ -1,9 +1,11 @@
 import { k } from "../App";
 import { Room } from "colyseus.js";
-import type { MyRoomState, Player } from "../../../server/src/rooms/schema/MyRoomState";
+import type { RoomState, Player } from "../../../server/src/rooms/schema/RoomState";
+import { colyseusSDK } from "../core/colyseus";
+
 
 export function createLobbyScene() {
-  k.scene("lobby", (room: Room<MyRoomState>) => {
+  k.scene("lobby", (room: Room<RoomState>) => {
     // Keep track of player sprites
     const spritesBySessionId: Record<string, any> = {};
 
@@ -32,6 +34,20 @@ export function createLobbyScene() {
 
           // Update the coordinate text
           coordinateText.text = `Position: (x: ${Math.round(sprite.pos.x)}, y: ${Math.round(sprite.pos.y)})`;
+
+          // Check if the player reaches a specific coordinate
+          if (sprite.pos.x > 500 && sprite.pos.y > 300) {
+            // Disable updates to avoid multiple triggers
+            k.onUpdate(() => { });
+
+            // Leave the current room safely
+            room.leave().then(() => {
+              console.log("Left room successfully, now joining the new room.");
+              joinNewRoom();
+            }).catch((err) => {
+              console.error("Error leaving the room:", err);
+            });
+          }
         });
       }
     });
@@ -64,7 +80,7 @@ export function createLobbyScene() {
   });
 }
 
-function createPlayer(player: Player, room: Room<MyRoomState>) {
+function createPlayer(player: Player, room: Room<RoomState>) {
   k.loadSprite(player.avatar, `assets/${player.avatar}.png`);
 
   // Add player sprite
@@ -82,4 +98,21 @@ function createPlayer(player: Player, room: Room<MyRoomState>) {
   });
 
   return sprite;
+}
+
+
+async function joinNewRoom() {
+  console.log(111111)
+  try {
+    const newRoom = await colyseusSDK.joinOrCreate<RoomState>("my_room2", {
+      name: "Ka2"
+    });
+
+    console.log("Joined new room:", newRoom);
+
+    // Load the new room's scene
+    k.go("lobby", newRoom);
+  } catch (err) {
+    console.error("Error joining new room:", err);
+  }
 }

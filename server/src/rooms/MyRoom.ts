@@ -1,5 +1,5 @@
 import { Room, Client } from "@colyseus/core";
-import { MyRoomState, Player } from "./schema/MyRoomState";
+import { RoomState, Player, _room } from "./schema/RoomState";
 
 // list of avatars
 const avatars = ['dino', 'bean', 'bag', 'btfly', 'bobo', 'ghostiny', 'ghosty', 'mark'];
@@ -15,12 +15,25 @@ const movementDelta: Record<Direction, { x: number; y: number }> = {
 };
 
 
-export class MyRoom extends Room<MyRoomState> {
+export class MyRoom extends Room<RoomState> {
   maxClients = 100;
 
   onCreate (options: any) {
-    this.setState(new MyRoomState());
+    this.setState(new RoomState());
 
+    const center = new _room();
+    center.name = "center";
+    center.centerX = 0;
+    center.centerY = 0;
+
+    const left = new _room()
+    left.name = "left";
+    left.centerX = 1000;
+    left.centerY = 1000;
+
+    this.state.roomManager.set("center", center)
+    this.state.roomManager.set("left", left)
+    
     this.onMessage("move", (client, message) => {
       const player = this.state.players.get(client.sessionId);
       player.x = message.x;

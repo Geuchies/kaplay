@@ -2,7 +2,7 @@ import './index.css';
 import kaplay from 'kaplay'
 import { colyseusSDK } from "./core/colyseus";
 import { createLobbyScene } from './scenes/lobby';
-import type { MyRoomState } from '../../server/src/rooms/schema/MyRoomState';
+import type { RoomState } from '../../server/src/rooms/schema/RoomState';
 
 // Initialize kaplay
 export const k = kaplay({ background: "20252e" });
@@ -18,7 +18,7 @@ async function main() {
     k.anchor("center")
   ]);
 
-  const room = await colyseusSDK.joinOrCreate<MyRoomState>("my_room", {
+  const room = await colyseusSDK.joinOrCreate<RoomState>("my_room", {
     name: "Ka"
   });
 
